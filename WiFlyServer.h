@@ -15,11 +15,11 @@ public:
    WiFlyServer( WiFlyDevice& dev = wifly,
                 uint16_t port = 80 );
 
-   bool
-   available( WiFlyClient& client );
-  
    void
    begin();
+
+   bool
+   available( WiFlyClient& client );
 
  private:
 

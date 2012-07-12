@@ -22,10 +22,8 @@
 ///
 /// Note: Supplied UART should/need not have been initialised first.
 ///
-WiFlyDevice::WiFlyDevice( SpiUartDevice* spi_uart )
-   : _spi_uart( spi_uart ),
-     _uart( spi_uart ),
-     _different_uart( false ),
+WiFlyDevice::WiFlyDevice( SpiUartDevice* uart )
+   : _uart( uart ),
      _server_port( DEFAULT_SERVER_PORT )
 {
 }
@@ -33,19 +31,14 @@ WiFlyDevice::WiFlyDevice( SpiUartDevice* spi_uart )
 // // TODO: Create a constructor that allows a SpiUartDevice (or better a "Stream") to be supplied
 // //       and/or allow the select pin to be supplied.
 
-// ///
-// ///
-// ///
-// void
-// WiFlyDevice::set_uart( Stream* uart )
-// {
-//    LOG( 1, "Enter 'WiFlyDevice::set_uart( Stream* )'." );
-
-//    _different_uart = true;
-//    _uart = uart;
-
-//    LOG( 1, "Exit 'WiFlyDevice::set_uart( Stream* )'." );
-// }
+///
+///
+///
+void
+WiFlyDevice::set_uart( SpiUartDevice* uart )
+{
+   _uart = uart;
+}
 
 // TODO: Create a `begin()` that allows IP etc to be supplied.
 
@@ -55,8 +48,11 @@ WiFlyDevice::WiFlyDevice( SpiUartDevice* spi_uart )
 void
 WiFlyDevice::begin()
 {
-   if( !_different_uart )
-      _spi_uart->begin();
+   if( _uart == NULL )
+   {
+      _uart = new SpiUartDevice;
+      _uart->begin();
+   }
 
    _reboot(); // Reboot to get device into known state
    // //requireFlowControl();
@@ -67,26 +63,18 @@ WiFlyDevice::begin()
 ///
 ///
 bool
-WiFlyDevice::join( const char* ssid )
+WiFlyDevice::join( const char* ssid,
+                   bool command_mode )
 {
-   // TODO: Handle other authentication methods
-   // TODO: Handle escaping spaces/$ in SSID
-   // TODO: Allow for timeout?
-
-   // TODO: Do we want to set the passphrase/key to empty when they're
-   //       not required? (Probably not necessary as I think module
-   //       ignores them when they're not required.)
+   // Make sure we are in command mode.
+   if( !command_mode )
+      _enter_command_mode();
 
    _send_command( F( "join " ), true );
-   // TODO: Actually detect failure to associate
-   // TODO: Handle connecting to Adhoc device
    if( _send_command( ssid, false, "Associated!") )
    {
-      // TODO: Extract information from complete response?
-      // TODO: Change this to still work when server mode not active
-      _wait_for_response( "Listen on " );
-      _skip_remainder_of_response();
-      return true;
+      delay( 2000 );
+      return _find_in_response( "IP=" );
    }
    return false;
 }
@@ -99,6 +87,9 @@ WiFlyDevice::join( const char* ssid,
                    const char* passphrase,
                    bool is_wpa )
 {
+   // Make sure we are in command mode.
+   _enter_command_mode();
+
    // TODO: Handle escaping spaces/$ in passphrase and SSID
 
    _send_command( F( "set wlan "), true );
@@ -107,7 +98,7 @@ WiFlyDevice::join( const char* ssid,
    else
       _send_command( F( "key "), true );
    _send_command( passphrase );
-   return join( ssid );
+   return join( ssid, true );
 }
 
 // ///
@@ -129,7 +120,7 @@ WiFlyDevice::join( const char* ssid,
 //          delay(10); // If we don't have this here when we specify the
 //          // baud as a number rather than a string it seems to
 //          // fail. TODO: Find out why.
-//          _spi_uart->begin( value );
+//          _uart->begin( value );
 //          // For some reason the following check fails if it occurs before
 //          // the change of SPI UART serial rate above--even though the
 //          // documentation says the AOK is returned at the old baud
@@ -143,6 +134,21 @@ WiFlyDevice::join( const char* ssid,
 //    }
 //    return true;
 // }
+
+///
+///
+///
+void
+WiFlyDevice::sleep( unsigned seconds )
+{
+   _enter_command_mode();
+   _send_command( F( "set sys wake " ), true );
+   _uart->print( seconds + 1 );
+   _send_command( F( "" ) );
+   _send_command( F( "set sys sleep 1" ) );
+   _send_command( F( "exit" ), false, "EXIT" );
+   delay( 2 );
+}
 
 ///
 ///
@@ -243,61 +249,16 @@ WiFlyDevice::_find_in_response( const char* to_match,
 ///
 ///
 bool
-WiFlyDevice::_enter_command_mode( bool is_after_boot )
+WiFlyDevice::_enter_command_mode()
 {
-   // Note: We used to first try to exit command mode in case we were
-   //       already in it. Doing this actually seems to be less
-   //       reliable so instead we now just ignore the errors from
-   //       sending the "$$$" in command mode.
-
-   for( unsigned ii = 0; ii < COMMAND_MODE_ENTER_RETRY_ATTEMPTS; ++ii )
+   _uart->print( F( "$$$" ) );
+   int match = _uart->match_P( 2, F( "CMD" ), F( "$$$" ) );
+   if( match == 1 )
    {
-      // At first I tried automatically performing the
-      // wait-send-wait-send-send process twice before checking if it
-      // succeeded. But I removed the automatic retransmission even
-      // though it makes things  marginally less reliable because it speeds
-      // up the (hopefully) more common case of it working after one
-      // transmission. We also now have automatic-retries for the whole
-      // process now so it's less important anyway.
-
-      if( is_after_boot )
-         delay(1000); // This delay is so characters aren't missed after a reboot.
-
-      delay( COMMAND_MODE_GUARD_TIME );
-      _uart->print( F( "$$$" ) );
-      delay( COMMAND_MODE_GUARD_TIME );
-
-      // We could already be in command mode or not.
-      // We could also have a half entered command.
-      // If we have a half entered command the "$$$" we've just added
-      // could succeed or it could trigger an error--there's a small
-      // chance it could also screw something up (by being a valid
-      // argument) but hopefully it's not a general issue.  Sending
-      // these two newlines is intended to clear any partial commands if
-      // we're in command mode and in either case trigger the display of
-      // the version prompt (not that we actually check for it at the moment
-      // (anymore)).
-
-      // TODO: Determine if we need less boilerplate here.
-
       _uart->println();
-      _uart->println();
-
-      // TODO: Add flush with timeout here?
-
-      // This is used to determine whether command mode has been entered
-      // successfully.
-      // TODO: Find alternate approach or only use this method after a (re)boot?
-      _uart->println( F( "ver" ) );
-
-      if( _find_in_response( "\r\nWiFly Ver" ) )
-      {
-         // TODO: Flush or leave remainder of output?
-         return true;
-      }
+      _uart->flush();
    }
-
-   return false;
+   return match == 0 || match == 1;
 }
 
 ///
@@ -326,18 +287,10 @@ WiFlyDevice::_software_reboot( bool is_after_boot )
 {
    for( unsigned ii = 0; ii < SOFTWARE_REBOOT_RETRY_ATTEMPTS; ++ii )
    {
-      // TODO: Have the post-boot delay here rather than in enterCommandMode()?
-
-      if( !_enter_command_mode( is_after_boot ) )
-         return false; // If the included retries have failed we give up
+      if( !_enter_command_mode() )
+         return false;
 
       _uart->println( F( "reboot" ) );
-
-      // For some reason the full "*Reboot*" message doesn't always
-      // seem to be received so we look for the later "*READY*" message instead.
-
-      // TODO: Extract information from boot? e.g. version and MAC address
-
       if( _find_in_response( "*READY*", 2000 ) )
          return true;
    }
@@ -351,15 +304,11 @@ WiFlyDevice::_software_reboot( bool is_after_boot )
 bool
 WiFlyDevice::_hardware_reboot()
 {
-   if( !_different_uart )
-   {
-      _spi_uart->io_set_direction( 0b00000010 );
-      _spi_uart->io_set_state( 0b00000000 );
-      delay( 1 );
-      _spi_uart->io_set_state( 0b00000010 );
-      return _find_in_response( "*READY*", 2000 );
-   }
-   return _software_reboot();
+   _uart->io_set_direction( 0b00000010 );
+   _uart->io_set_state( 0b00000000 );
+   delay( 1 );
+   _uart->io_set_state( 0b00000010 );
+   return _find_in_response( "*READY*", 2000 );
 }
 
 ///

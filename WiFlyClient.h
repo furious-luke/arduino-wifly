@@ -1,7 +1,7 @@
 #ifndef WiFly_WiFlyClient_h
 #define WiFly_WiFlyClient_h
 
-#include "Stream.h"
+#include <Stream.h>
 #include "WiFlyDevice.h"
 
 class WiFlyClient
@@ -9,10 +9,12 @@ class WiFlyClient
 {
 public:
 
-   WiFlyClient( uint8_t* ip = NULL,
+   WiFlyClient( WiFlyDevice& dev,
+                uint8_t* ip = NULL,
                 uint16_t port = 0 );
 
-   WiFlyClient( const char* domain,
+   WiFlyClient( WiFlyDevice& dev,
+                const char* domain,
                 uint16_t port );
 
    bool
@@ -42,7 +44,6 @@ public:
    bool
    find( const char* str,
          unsigned timeout = 1000 );
-         
 
    void
    flush();
@@ -54,7 +55,7 @@ public:
    connected();
 
    void
-   stop();
+   close();
 
 private:
 

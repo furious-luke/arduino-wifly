@@ -14,21 +14,25 @@ class WiFlyDevice
 {
 public:
 
-   WiFlyDevice( SpiUartDevice* uart );
+   WiFlyDevice( SpiUartDevice* uart = NULL );
 
-   // void
-   // set_uart( Stream* uart );
+   void
+   set_uart( SpiUartDevice* uart );
 
    void
    begin();
 
    bool
-   join( const char* ssid );
+   join( const char* ssid,
+         bool command_mode = false );
 
    bool
    join( const char* ssid,
-         const char* phrase, 
+         const char* phrase,
          bool wpa = true );
+
+   void
+   sleep( unsigned seconds );
 
    // bool
    // configure( byte option,
@@ -85,17 +89,15 @@ private:
 //    _response_matched( const char* to_match );
 
    bool
-   _find_in_response( const char* toMatch,
+   _find_in_response( const char* to_match,
                       unsigned time_out = 1000 );
 
    bool
-   _enter_command_mode( bool is_after_boot = false );
+   _enter_command_mode();
 
 // private:
 
-   SpiUartDevice* _spi_uart;
-   Stream* _uart;
-   bool _different_uart;
+   SpiUartDevice* _uart;
    uint16_t _server_port;
 
    friend class WiFlyClient;

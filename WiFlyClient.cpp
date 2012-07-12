@@ -4,12 +4,13 @@
 ///
 ///
 ///
-WiFlyClient::WiFlyClient( uint8_t* ip,
+WiFlyClient::WiFlyClient( WiFlyDevice& dev,
+                          uint8_t* ip,
                           uint16_t port)
    : _ip( ip ),
      _port( port ),
      _domain( NULL ),
-     _dev( &wifly ),
+     _dev( &dev ),
      _open( false )
 {
 }
@@ -17,12 +18,13 @@ WiFlyClient::WiFlyClient( uint8_t* ip,
 ///
 ///
 ///
-WiFlyClient::WiFlyClient( const char* domain,
+WiFlyClient::WiFlyClient( WiFlyDevice& dev,
+                          const char* domain,
                           uint16_t port )
    : _ip( NULL ),
      _port( port ),
      _domain( domain ),
-     _dev( &wifly ),
+     _dev( &dev ),
      _open( false )
 {
 }
@@ -144,6 +146,8 @@ WiFlyClient::find( const char* str,
    return _dev->_find_in_response( (char*)str, timeout );
 }
 
+
+
 ///
 ///
 ///
@@ -180,36 +184,11 @@ WiFlyClient::connected()
 ///
 ///
 void
-WiFlyClient::stop()
+WiFlyClient::close()
 {
-   /*
-    */
-   // TODO: Work out if there's some unintended compatibility issues
-   //       related to interactions between `stop()`, `connected()` and
-   //       `available()`.
-
-   // This stop implementation is suboptimal. We need to handle the case
-   // of a server connection differently to a client connection.
-   // We also need to handle better detecting if the connection is already
-   // closed.
-   // In the interests of getting something out the door--that somewhat
-   // works--this is what we're going with at the moment.
-
    _dev->_enter_command_mode();
    _dev->_uart->println( "close" );
-   // We ignore the response which could be "*CLOS*" or could be an
-   // error if the connection is no longer open.
-
-   _dev->_uart->println( "exit" ); // TODO: Fix this hack which is a workaround for the fact the closed connection isn't detected properly, it seems. Even with this there's a delay between reconnects needed.
-   _dev->_find_in_response( "EXIT", 1000 );
-   //_WiFly.skipRemainderOfResponse();
-   // As a result of this, unwanted data gets sent to /dev/null rather than
-   // confusing the WiFly which tries to interpret it as commands.
-
-   _dev->_uart->flush();
-
-   // This doesn't really work because the object gets copied in the
-   // WeWiFlyClient example code.
+   if( _dev->_uart->match_P( 2, F( "*CLOS*" ), F( "Err" ) ) == 1 )
+      _dev->_uart->flush();
    _open = false; 
-   // _port = 0;
 }
