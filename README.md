@@ -49,7 +49,7 @@ Initialising the WiFly hardware requires defining a ``WiFlyDevice`` and
 calling ``begin``:
 
 ```c++
-WiflyDevice wifly;
+WiFlyDevice wifly;
 
 void setup() {
   wifly.begin();
