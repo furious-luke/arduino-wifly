@@ -46,12 +46,12 @@ The class ``WiFlyDevice`` defines access to fundamental hardware functions.
 Initialising the WiFly hardware requires defining a ``WiFlyDevice`` and 
 calling ``begin``::
 
-  WiflyDevice wifly;
+    WiflyDevice wifly;
 
-  void setup() {
-    wifly.begin();
-    wifly.join( ssid, passphrase )
-  }
+    void setup() {
+      wifly.begin();
+      wifly.join( ssid, passphrase )
+    }
 
 The call to ``join`` connects to an SSID, returning true if successful.
 
@@ -60,14 +60,14 @@ Starting a server
 
 To run a server on your WiFly hardware, use the ``WiFlyServer`` class::
 
-  WiFlyDevice wifly;
-  WiFlyServer server( wifly );
+    WiFlyDevice wifly;
+    WiFlyServer server( wifly );
 
-  void setup() {
-    wifly.begin();
-    wifly.join( ssid, passphrase )
-    server.begin();
-  }
+    void setup() {
+      wifly.begin();
+      wifly.join( ssid, passphrase )
+      server.begin();
+    }
 
 Handling client connections
 ---------------------------
@@ -75,22 +75,22 @@ Handling client connections
 Individual incoming client connections are handled using the ``WiFlyClient``
 class::
 
-  WiFlyDevice wifly;
-  WiFlyServer server( wifly );
+    WiFlyDevice wifly;
+    WiFlyServer server( wifly );
 
-  void setup() {
-    wifly.begin();
-    wifly.join( ssid, passphrase )
-    server.begin();
-  }
-
-  void loop() {
-    WiFlyClient client( wifly );
-    if( server.available( client ) )
-    {
-      // "client" is now ready for communication.
+    void setup() {
+      wifly.begin();
+      wifly.join( ssid, passphrase )
+      server.begin();
     }
-  }
+
+    void loop() {
+      WiFlyClient client( wifly );
+      if( server.available( client ) )
+      {
+        // "client" is now ready for communication.
+      }
+    }
 
 Reading and writing data
 ---------------------------
@@ -98,35 +98,35 @@ Reading and writing data
 The ``WiFlyClient`` class has three primary methods for reading
 and writing data, ``match_P``, ``readString`` and ``println``::
 
-  WiFlyDevice wifly;
-  WiFlyServer server( wifly );
+    WiFlyDevice wifly;
+    WiFlyServer server( wifly );
 
-  void setup() {
-    wifly.begin();
-    wifly.join( ssid, passphrase )
-    server.begin();
-  }
+    void setup() {
+      wifly.begin();
+      wifly.join( ssid, passphrase )
+      server.begin();
+    }
 
-  void loop() {
-    WiFlyClient client( wifly );
-    if( server.available( client ) )
-    {
-      // "client" is now ready for communication.
-
-      // To perform timed stream matching on incoming data,
-      // without needing to worry about delayed connections
-      // (i.e. the matching will wait for new data to arrive):
-      int match = client.match_P( 2, "GET / ", "POST / " );
-      if( match == 0 )
+    void loop() {
+      WiFlyClient client( wifly );
+      if( server.available( client ) )
       {
-        // Have a GET.
-        String data = client.readString();
-	// Do something with the data...
-	client.println( "<p> Results... </p>" );
-      }
-      else if( match == 1 )
-      {
-        // Have a POST.
+        // "client" is now ready for communication.
+
+        // To perform timed stream matching on incoming data,
+        // without needing to worry about delayed connections
+        // (i.e. the matching will wait for new data to arrive):
+        int match = client.match_P( 2, "GET / ", "POST / " );
+        if( match == 0 )
+        {
+          // Have a GET.
+          String data = client.readString();
+          // Do something with the data...
+          client.println( "<p> Results... </p>" );
+        }
+        else if( match == 1 )
+        {
+          // Have a POST.
+        }
       }
     }
-  }
