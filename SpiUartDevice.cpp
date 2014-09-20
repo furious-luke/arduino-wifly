@@ -1,3 +1,4 @@
+#include "globals.h"
 #include "SpiUartDevice.h"
 #include "log.h"
 #include "assert.h"

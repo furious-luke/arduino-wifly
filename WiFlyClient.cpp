@@ -1,3 +1,4 @@
+#include "globals.h"
 #include "WiFly.h"
 #include "WiFlyClient.h"
 
