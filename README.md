@@ -37,6 +37,11 @@ matching method. The files stored under ``system`` need to be placed
 in ``.../hardware/arduino/cores/arduino/``, replacing the existing
 files.
 
+### Dependencies
+
+Uses another simple project of mine: ``arduino-debug``. You will need
+to drop that into your libraries folder before using WiFly.
+
 ### Initialising the device
 
 The class ``WiFlyDevice`` defines access to fundamental hardware functions.
