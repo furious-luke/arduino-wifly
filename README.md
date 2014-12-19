@@ -23,7 +23,7 @@ to simplify some stream based matching used in this WiFly
 library. Included in the repository is two extra files under the
 "system" directory, Stream.h
 and Stream.cpp. These need to replace the existing files
-typically stored in ".../hardware/arduino/cores/arduino/". It's
+typically stored in "/usr/share/arduino/hardware/arduino/cores/arduino/". It's
 annoying, I know.
 
 Usage
@@ -34,7 +34,7 @@ Usage
 As mentioned above, the standard Arduino stream implemntation was/is
 a bit buggy. I've patched a couple of things and added a timed stream
 matching method. The files stored under ``system`` need to be placed
-in ``.../hardware/arduino/cores/arduino/``, replacing the existing
+in ``/usr/share/arduino/hardware/arduino/cores/arduino/``, replacing the existing
 files.
 
 ### Dependencies

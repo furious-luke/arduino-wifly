@@ -76,7 +76,7 @@ WiFlyDevice::join( const char* ssid,
 
    _send_command( F( "set wlan ssid "), true );
    _send_command( ssid );
-   if( _send_command( F( "join" ), false, "Associated!") )
+   if( _send_command( "join", false, "Associated!", 10000 ) )
    {
       LOGLN( "Associated." );
 
@@ -334,7 +334,8 @@ WiFlyDevice::_reboot()
 bool
 WiFlyDevice::_send_command( const char* command,
                             bool multipart,
-                            const char* response )
+                            const char* response,
+			    unsigned time_out )
 {
    _uart->print( command );
    delay( 20 );
@@ -346,7 +347,7 @@ WiFlyDevice::_send_command( const char* command,
       // TODO: Handle other responses
       //       (e.g. autoconnect message before it's turned off,
       //        DHCP messages, and/or ERR etc)
-      if( !_find_in_response( response ) )
+      if( !_find_in_response( response, time_out ) )
          return false;
    }
    return true;
@@ -358,7 +359,8 @@ WiFlyDevice::_send_command( const char* command,
 bool
 WiFlyDevice::_send_command( const __FlashStringHelper* command,
                             bool multipart,
-                            const char* response )
+                            const char* response,
+			    unsigned time_out )
 {
    _uart->print( command );
    delay( 20 );
@@ -370,8 +372,8 @@ WiFlyDevice::_send_command( const __FlashStringHelper* command,
       // TODO: Handle other responses
       //       (e.g. autoconnect message before it's turned off,
       //        DHCP messages, and/or ERR etc)
-      // if( !_find_in_response( response ) )
-      //    return false;
+      if( !_find_in_response( response, time_out ) )
+         return false;
    }
    return true;
 }

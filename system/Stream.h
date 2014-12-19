@@ -74,7 +74,7 @@ class Stream : public Print
            ... );
 
   int8_t
-  match_P( const prog_char* str[],
+  match_P( const char PROGMEM* str[],
            uint8_t count );
 
 

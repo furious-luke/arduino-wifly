@@ -136,7 +136,7 @@ int
 Stream::match_P( uint8_t count,
                       ... )
 {
-   const prog_char *str[20];
+   const char PROGMEM *str[20];
    va_list ap;
    va_start(ap, count);
 
@@ -144,19 +144,19 @@ Stream::match_P( uint8_t count,
       count = 20;
 
    for( unsigned ii = 0; ii < count; ++ii )
-      str[ii] = va_arg( ap, const prog_char* );
+      str[ii] = va_arg( ap, const char PROGMEM* );
    va_end(ap);
 
    return match_P(str, count);
 }
 
 int8_t
-Stream::match_P( const prog_char* str[],
+Stream::match_P( const char PROGMEM* str[],
                  uint8_t count )
 {
    struct {
       bool active;
-      const prog_char *str;
+      const char PROGMEM *str;
    } match[count];
    char ch, ch_P;
    uint8_t ind;

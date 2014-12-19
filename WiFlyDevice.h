@@ -73,11 +73,13 @@ private:
    bool
    _send_command( const char* command,
                   bool multipart = false,
-                  const char* response = "AOK" );
+                  const char* response = "AOK",
+		  unsigned time_out = 1000 );
    bool
    _send_command( const __FlashStringHelper* command,
                   bool multipart = false,
-                  const char* response = "AOK" );
+                  const char* response = "AOK",
+		  unsigned time_out = 1000 );
 
    void
    _wait_for_response( const char* to_match );
